@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -9,11 +10,9 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/spf13/cobra"
 	"kasikorn-line-api-migrations/config"
-	logger "kasikorn-line-api-migrations/pkg/log"
 )
 
 func createMigrateInstance() (*migrate.Migrate, error) {
-
 	appConfig := config.LoadConfig()
 
 	dbURL := fmt.Sprintf("mysql://%s:%s@tcp(%s:%d)/%s?multiStatements=true",
@@ -32,7 +31,7 @@ func createMigrateInstance() (*migrate.Migrate, error) {
 func runMigration(direction string) {
 	m, err := createMigrateInstance()
 	if err != nil {
-		logger.Fatal("❌ Failed to create migrate instance")
+		log.Fatal("❌ Failed to create migrate instance:", err)
 	}
 	defer m.Close()
 
@@ -44,12 +43,12 @@ func runMigration(direction string) {
 	}
 
 	if migrationErr != nil && migrationErr != migrate.ErrNoChange {
-		logger.Fatal("❌ Migration failed")
+		log.Fatal("❌ Migration failed:", migrationErr)
 	} else {
 		if direction == "up" {
-			logger.Info("✅ Database migration completed successfully!")
+			log.Println("✅ Database migration completed successfully!")
 		} else {
-			logger.Info("✅ Rollback completed (or no changes detected)")
+			log.Println("✅ Rollback completed (or no changes detected)")
 		}
 	}
 }
@@ -76,7 +75,7 @@ func main() {
 	rootCmd.AddCommand(cmdRollback)
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println("Error:", err)
+		log.Println("Error:", err)
 		os.Exit(1)
 	}
 }
